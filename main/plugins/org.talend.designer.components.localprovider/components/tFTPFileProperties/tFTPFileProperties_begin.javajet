@@ -66,7 +66,7 @@ if (("true").equals(useExistingConn)) {
 boolean isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
 String passwordFieldName = "";
 
-if (useProxy) {
+if (useProxy && !("true").equals(useExistingConn)) {
 %>
   java.util.Properties props_<%=cid%> = System.getProperties();
   props_<%=cid%>.put("socksProxyPort", <%=proxyPort %>);
@@ -82,7 +82,12 @@ if (ElementParameterParser.canEncrypt(node, passwordFieldName)) {
   String decryptedProxyPassword_<%=cid%> = <%= ElementParameterParser.getValue(node, passwordFieldName)%>; 
 <%}%>
 
-  props_<%=cid%>.put("java.net.socks.password", decryptedProxyPassword_<%=cid%>);    
+  props_<%=cid%>.put("java.net.socks.password", decryptedProxyPassword_<%=cid%>);
+  java.net.Authenticator.setDefault(new java.net.Authenticator() {
+        public java.net.PasswordAuthentication getPasswordAuthentication() {
+            return new java.net.PasswordAuthentication(<%=proxyUser %>, decryptedProxyPassword_<%=cid%>.toCharArray());
+        }
+  });
 <%
 }
 String outputConnName = null;

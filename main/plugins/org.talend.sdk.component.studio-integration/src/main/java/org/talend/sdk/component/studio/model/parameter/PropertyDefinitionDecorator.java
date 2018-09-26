@@ -15,19 +15,28 @@
  */
 package org.talend.sdk.component.studio.model.parameter;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_HEALTHCHECK;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_SUGGESTIONS_NAME;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_SUGGESTIONS_PARAMETERS;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_UPDATABLE_AFTER;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_UPDATABLE_PARAMETERS;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_UPDATABLE_VALUE;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_VALIDATION_NAME;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ACTION_VALIDATION_PARAMETERS;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONDITION_IF_EVALUTIONSTRATEGY;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONDITION_IF_NEGATE;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONDITION_IF_TARGET;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONDITION_IF_VALUE;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONFIG_NAME;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.CONFIG_TYPE;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.MAIN_FORM;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.ORDER_SEPARATOR;
+import static org.talend.sdk.component.studio.model.parameter.Metadatas.PARAMETER_INDEX;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.UI_GRIDLAYOUT_PREFIX;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.UI_GRIDLAYOUT_SUFFIX;
 import static org.talend.sdk.component.studio.model.parameter.Metadatas.UI_OPTIONS_ORDER;
@@ -38,20 +47,28 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.json.bind.annotation.JsonbCreator;
+import javax.json.bind.annotation.JsonbProperty;
+
+import org.talend.sdk.component.form.internal.converter.impl.widget.path.AbsolutePathResolver;
 import org.talend.sdk.component.server.front.model.PropertyValidation;
 import org.talend.sdk.component.server.front.model.SimplePropertyDefinition;
+import org.talend.sdk.component.studio.model.parameter.condition.ConditionGroup;
 
 /**
  * Extends functionality of {@link SimplePropertyDefinition}
  * It doesn't allow to change <code>delegate</code> state
  */
 public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
+    private static final AbsolutePathResolver PATH_RESOLVER = new AbsolutePathResolver();
 
     /**
      * Separator in property path
@@ -61,7 +78,7 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
     /**
      * Denotes that some property has no parent property
      */
-    private static final String NO_PARENT_ID = "";
+    static final String NO_PARENT_ID = "";
 
     /**
      * Suffix used in id ({@link SimplePropertyDefinition#getPath()}), which denotes Array typed property
@@ -85,7 +102,8 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
      *
      * @param property {@link SimplePropertyDefinition} to wrap
      */
-    PropertyDefinitionDecorator(final SimplePropertyDefinition property) {
+    @JsonbCreator
+    public PropertyDefinitionDecorator(@JsonbProperty("delegate") final SimplePropertyDefinition property) {
         this.delegate = property;
     }
 
@@ -98,7 +116,7 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
      */
     public static Collection<PropertyDefinitionDecorator> wrap(final Collection<SimplePropertyDefinition> properties) {
         return properties.stream()
-                .map(property -> new PropertyDefinitionDecorator(property))
+                .map(PropertyDefinitionDecorator::new)
                 .collect(toList());
     }
     
@@ -351,19 +369,24 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
         return delegate.getMetadata().get(buildGridLayoutKey(form));
     }
 
-    List<Condition> getCondition() {
-        return delegate.getMetadata()
+    ConditionGroup getConditions() {
+        return new ConditionGroup(delegate.getMetadata()
                 .entrySet()
                 .stream()
                 .filter(meta -> meta.getKey().startsWith(CONDITION_IF_TARGET))
                 .map(meta -> {
                     final String[] split = meta.getKey().split("::");
-                    final String valueKey =
-                            CONDITION_IF_VALUE + (split.length == 4 ? "::" + split[split.length - 1] : "");
-                    return new Condition(meta.getValue(),
+                    final String index = split.length == 4 ? "::" + split[split.length - 1] : "";
+                    final String valueKey = CONDITION_IF_VALUE + index;
+                    final String negateKey = CONDITION_IF_NEGATE + index;
+                    final String evaluationStrategyKey = CONDITION_IF_EVALUTIONSTRATEGY + index;
+                    final String absoluteTargetPath = PATH_RESOLVER.resolveProperty(delegate.getPath(), meta.getValue());
+                    return new Condition(
                             delegate.getMetadata().getOrDefault(valueKey, "true").split(VALUE_SEPARATOR),
-                            delegate.getPath());
-                }).collect(toList());
+                            absoluteTargetPath,
+                            Boolean.parseBoolean(delegate.getMetadata().getOrDefault(negateKey, "false")),
+                            delegate.getMetadata().getOrDefault(evaluationStrategyKey, "DEFAULT"));
+                }).collect(toList()), "AND".equalsIgnoreCase(delegate.getMetadata().getOrDefault("condition::ifs::operator", "AND")));
     }
 
     /**
@@ -423,19 +446,19 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
      *
      * @return true, it it has action::validation metadata; false otherwise
      */
-    boolean hasValidation() {
+    public boolean hasValidation() {
         return delegate.getMetadata().containsKey(ACTION_VALIDATION_NAME)
                 && delegate.getMetadata().containsKey(ACTION_VALIDATION_PARAMETERS);
     }
 
-    String getValidationName() {
+    public String getValidationName() {
         if (!hasValidation()) {
             throw new IllegalStateException("Property has no validation");
         }
         return delegate.getMetadata().get(ACTION_VALIDATION_NAME);
     }
 
-    List<String> getValidationParameters() {
+    public List<String> getValidationParameters() {
         if (!hasValidation()) {
             throw new IllegalStateException("Property has no validation");
         }
@@ -443,11 +466,18 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
         return Arrays.asList(parametersValue.split(VALUE_SEPARATOR));
     }
 
+    // TODO: all these trigger specific methods are quit duplicating the same code,
+    // we should try to align it since all trigger use the same kind of API
+    // TODO: avoid NPE here as not every property has action
+    public List<String> getParameters(final String actionType) {
+        return Arrays.asList(delegate.getMetadata().get("action::" + actionType + "::parameters").split(VALUE_SEPARATOR));
+    }
+
     boolean isCheckable() {
         return delegate.getMetadata().containsKey(ACTION_HEALTHCHECK);
     }
 
-    String getHealthCheckName() {
+    public String getHealthCheckName() {
         if (!isCheckable()) {
             throw new IllegalArgumentException("It is not checkable");
         }
@@ -549,7 +579,7 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
     }
 
     @Override
-    public Map<String, String> getProposalDisplayNames() {
+    public LinkedHashMap<String, String> getProposalDisplayNames() {
         return delegate.getProposalDisplayNames();
     }
     
@@ -558,7 +588,7 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
                 && delegate.getMetadata().containsKey(ACTION_SUGGESTIONS_PARAMETERS);
     }
     
-    Suggestions getSuggestions() {
+    public Suggestions getSuggestions() {
         if (!hasSuggestions()) {
             throw new IllegalStateException("Property has no suggestions");
         }
@@ -566,6 +596,26 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
         final String parametersValue = delegate.getMetadata().get(ACTION_SUGGESTIONS_PARAMETERS);
         final List<String> parameters = Arrays.asList(parametersValue.split(VALUE_SEPARATOR));
         return new Suggestions(name, parameters);
+    }
+
+    public Optional<Updatable> getUpdatable() {
+        final String name = delegate.getMetadata().get(ACTION_UPDATABLE_VALUE);
+        final String parameters = delegate.getMetadata().get(ACTION_UPDATABLE_PARAMETERS);
+        final String after = delegate.getMetadata().get(ACTION_UPDATABLE_AFTER);
+        if (name != null) {
+            return Optional.of(new Updatable(
+                    name, parameters != null && !parameters.trim().isEmpty() ?
+                        asList(parameters.split(VALUE_SEPARATOR)): emptyList(),
+                    after != null ? after : ""));
+        } else {
+            return Optional.empty();
+        }
+    }
+    
+    public Parameter getParameter() {
+        return ofNullable(delegate.getMetadata().get(PARAMETER_INDEX))
+                .map(s -> new Parameter(Integer.parseInt(s)))
+                .orElse(new Parameter());
     }
 
     @Override
@@ -580,67 +630,88 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
 
     public static class Condition {
 
-        private final String target;
+        /**
+         * Path to property to be evaluated (corresponds to ActiveIf.target())
+         */
+        private final String targetPath;
+
+        private final boolean negation;
+
+        private final String evaluationStrategy;
 
         private final String[] values;
 
-        private String targetPath;
+        private final int hash;
 
-        private String sourcePath;
-
-        public Condition(final String target, final String[] values, final String sourcePath) {
-            this.target = target;
-            this.sourcePath = sourcePath;
+        public Condition(final String[] values, final String targetPath,
+                         final boolean negation, final String evaluationStrategy) {
+            this.targetPath = targetPath;
             this.values = values;
-        }
-
-        public String getTarget() {
-            return this.target;
+            this.negation = negation;
+            this.evaluationStrategy = evaluationStrategy == null || evaluationStrategy.isEmpty() ? "DEFAULT" : evaluationStrategy;
+            this.hash = 31 * Objects.hash(targetPath, negation, evaluationStrategy) + Arrays.hashCode(values);
         }
 
         public String[] getValues() {
             return this.values;
         }
 
-        public void setTargetPath(final String targetPath) {
-            this.targetPath = targetPath;
-        }
-
         public String getTargetPath() {
             return targetPath;
         }
 
-        public String getSourcePath() {
-            return sourcePath;
+        public boolean isNegation() {
+            return negation;
         }
 
-        public void setSourcePath(final String sourcePath) {
-            this.sourcePath = sourcePath;
+        public String getEvaluationStrategy() {
+            return evaluationStrategy;
         }
 
         @Override
         public String toString() {
-            return "PropertyDefinitionDecorator.Condition(target=" + this.getTarget() + ", values="
+            return "PropertyDefinitionDecorator.Condition(target=" + this.getTargetPath() + ", values="
                     + Arrays.deepToString(this.getValues()) + ")";
         }
 
-        @Override public boolean equals(final Object o) {
+        @Override
+        public boolean equals(final Object o) {
             if (this == o)
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
             final Condition condition = (Condition) o;
-            return Objects.equals(target, condition.target) &&
-                    Arrays.equals(values, condition.values) &&
-                    Objects.equals(targetPath, condition.targetPath) &&
-                    Objects.equals(sourcePath, condition.sourcePath);
+            return Objects.equals(targetPath, condition.targetPath) &&
+                    Arrays.equals(values, condition.values);
         }
 
-        @Override public int hashCode() {
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+    }
 
-            int result = Objects.hash(target, targetPath, sourcePath);
-            result = 31 * result + Arrays.hashCode(values);
-            return result;
+    public static class Updatable {
+        private final String actionName;
+        private final Collection<String> parameters;
+        private final String previousProperty;
+
+        private Updatable(final String actionName, final Collection<String> parameters, final String previousProperty) {
+            this.actionName = actionName;
+            this.parameters = parameters;
+            this.previousProperty = previousProperty;
+        }
+
+        public Collection<String> getParameters() {
+            return parameters;
+        }
+
+        public String getPreviousProperty() {
+            return previousProperty;
+        }
+
+        public String getActionName() {
+            return actionName;
         }
     }
 
@@ -650,7 +721,7 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
 
         private final String value;
 
-        public static enum Type {
+        public enum Type {
             IN,
             OUT;
         }
@@ -708,13 +779,13 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
             return "PropertyDefinitionDecorator.Connection(type=" + this.getType() + ", value=" + this.getValue() + ")";
         }
     }
-    
+
     public static class Suggestions {
-        
+
         private final String name;
-        
+
         private final List<String> parameters;
-        
+
         Suggestions(final String name, final List<String> parameters) {
             this.name = name;
             this.parameters = parameters;
@@ -727,10 +798,33 @@ public class PropertyDefinitionDecorator extends SimplePropertyDefinition {
         public List<String> getParameters() {
             return parameters;
         }
-        
+
         @Override
         public String toString() {
             return "Suggestions(name=" + this.getName() + ", parameters=" + this.getParameters() + ")";
+        }
+    }
+    
+    public static class Parameter {
+        
+        private static int UNDEFINED = -1;
+        
+        private int index = UNDEFINED;
+        
+        Parameter() {
+            // no-op
+        }
+        
+        Parameter(final int index) {
+            this.index = index;
+        }
+        
+        public int getIndex() {
+            return index;
+        }
+        
+        public boolean isRoot() {
+            return index != UNDEFINED;
         }
     }
 }

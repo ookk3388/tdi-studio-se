@@ -15,16 +15,16 @@
  */
 package org.talend.sdk.component.studio.model.parameter.listener;
 
+import org.talend.sdk.component.studio.Lookups;
+import org.talend.sdk.component.studio.model.action.Action;
+import org.talend.sdk.component.studio.model.parameter.ValidationLabel;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.talend.sdk.component.studio.Lookups;
-import org.talend.sdk.component.studio.model.action.Action;
-import org.talend.sdk.component.studio.model.parameter.ValidationLabel;
-
-public class ValidationListener extends Action implements PropertyChangeListener {
+public class ValidationListener extends Action<String> implements PropertyChangeListener {
 
     private final ValidationLabel label;
 
@@ -35,11 +35,9 @@ public class ValidationListener extends Action implements PropertyChangeListener
 
     @Override
     public void propertyChange(final PropertyChangeEvent event) {
-        setParameterValue(event.getPropertyName(), (String) event.getNewValue());
-        if (!areParametersSet()) {
+        if(!"value".equals(event.getPropertyName())){
             return;
         }
-
         CompletableFuture.supplyAsync(this::validate, Lookups.uiActionsThreadPool().getExecutor()).thenAccept(
                 this::notify);
     }
@@ -51,9 +49,12 @@ public class ValidationListener extends Action implements PropertyChangeListener
     private void notify(final Map<String, String> validation) {
         if (OK.equals(validation.get(STATUS))) {
             label.hideValidation();
+            label.firePropertyChange("show", null, false);
         } else {
             label.showValidation(validation.get(MESSAGE));
+            label.firePropertyChange("show", null, true);
         }
+
     }
 
 }

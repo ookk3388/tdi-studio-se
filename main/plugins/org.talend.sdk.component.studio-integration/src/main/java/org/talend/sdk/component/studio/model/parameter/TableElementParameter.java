@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2006-2018 Talend Inc. - www.talend.com
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,19 @@
 package org.talend.sdk.component.studio.model.parameter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.talend.core.model.process.EParameterFieldType;
 import org.talend.core.model.process.IElement;
+import org.talend.core.model.process.IElementParameter;
+import org.talend.sdk.component.studio.model.action.IActionParameter;
 
 /**
  * Represents Table parameter. Table parameter is ElementParameter, which EParameterFieldType is TABLE
@@ -57,7 +64,7 @@ public class TableElementParameter extends TaCoKitElementParameter {
      * A Map instance in the List represents Table row. Rows are separated by ", " (comma with a whitespace).
      * Entries in the Map are also should be separated by ", ".
      * Generally, string argument should be equal to the result of a call to List.toString().
-     *
+     * <p>
      * If incoming argument is of type List, then sets it without conversion.
      * Else it throws exception.
      *
@@ -69,10 +76,69 @@ public class TableElementParameter extends TaCoKitElementParameter {
             final List<Map<String, Object>> tableValue = ValueConverter.toTable((String) newValue);
             super.setValue(fromRepository(tableValue));
         } else if (newValue instanceof List) {
-            super.setValue(newValue);
+            super.setValue(fixClosedListColumn((List<Map<String, Object>>) newValue));
         } else {
             throw new IllegalArgumentException("wrong type on new value: " + newValue.getClass().getName());
         }
+    }
+
+    /*
+        Provides quickfix for Closed List column. For some reason, when new row is added Studio sets index of possible
+        value instead of String value. This fix converts index back to String value
+     */
+    private List<Map<String, Object>> fixClosedListColumn(final List<Map<String, Object>> value) {
+        if (value == null || value.size() == 0 || getListItemsValue() == null) {
+            return value;
+        }
+        final Map<String, Object> lastRow = value.get(value.size() - 1);
+        Arrays.stream(getListItemsValue())
+                .map(o -> IElementParameter.class.cast(o))
+                .filter(p -> EParameterFieldType.CLOSED_LIST.equals(p.getFieldType()))
+                .forEach(p -> {
+                    if (lastRow.get(p.getName()) instanceof Integer) {
+                        Object newValue = p.getListItemsValue()[(Integer) lastRow.get(p.getName())];
+                        lastRow.put(p.getName(), newValue);
+                    }
+                });
+        return value;
+    }
+
+    /**
+     * Converts incoming {@code table} value retrieved from Action response to correct
+     * parameter value. Following corrections are done:
+     * 1. key is fixed - full path of Table child ElementParameter is used instead of Configuration class field name
+     * 2. Integer are replaced with Strings (as Integer in TableElementParameter means index of possible value
+     *
+     * @param table table value retrieved from action response
+     * @return correct value, which can be used in TableElementParameter
+     */
+    public void setValueFromAction(final List<Object> table) {
+        final List<Map<String, Object>> converted = new ArrayList<>();
+        for (final Object row : table) {
+            final Map<String, Object> convertedRow = new LinkedHashMap<>();
+            final List<TaCoKitElementParameter> columnParams = getColumnParameters();
+            for (TaCoKitElementParameter columnParam : columnParams) {
+                Object columnValue = null;
+                if (row instanceof Map) {
+                    final String key = columnParam.getName().replaceFirst(Pattern.quote(getName() + "[]."), "");
+                    columnValue = ((Map<String, Object>) row).get(key);
+                } else {  // boxed primitive value or String
+                    columnValue = row;
+                }
+                if (columnValue instanceof Integer) {
+                    columnValue = String.valueOf(columnValue);
+                }
+                convertedRow.put(columnParam.getName(), columnValue);
+            }
+            converted.add(convertedRow);
+        }
+        super.setValue(converted);
+    }
+
+    private List<TaCoKitElementParameter> getColumnParameters() {
+        return Arrays.stream(getListItemsValue())
+                .map(TaCoKitElementParameter.class::cast)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -121,6 +187,12 @@ public class TableElementParameter extends TaCoKitElementParameter {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public IActionParameter createActionParameter(final String actionParameter) {
+        final TableActionParameter parameter = new TableActionParameter(this, actionParameter);
+        return parameter;
     }
 
 }
