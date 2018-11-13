@@ -439,6 +439,17 @@ public class ComponentsUtils {
                 param.setValue(GenericTableUtils.getTableValues(table, param));
                 param.setBasedOnSchema(Boolean.valueOf(String.valueOf(widget
                         .getConfigurationValue(Widget.HIDE_TOOLBAR_WIDGET_CONF))));
+            }else if(EParameterFieldType.COMPONENT_REFERENCE.equals(fieldType)  && widgetProperty instanceof ComponentReferenceProperties){
+                ComponentReferenceProperties refPros = (ComponentReferenceProperties) widgetProperty;refPros.getForm(Form.MAIN);
+                for(Object obj : refPros.getProperties()){
+                    if(!(obj instanceof Property)){
+                        continue;
+                    }
+                    Property property = (Property) obj;
+                    if(refPros.componentInstanceId.getName().equals(property.getName())){
+                        param.setValue(getParameterValue(element, property, fieldType, parameterName));
+                    }
+                }
             }
 
             if (!param.isReadOnly()) {

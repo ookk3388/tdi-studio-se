@@ -209,7 +209,14 @@ public class ComponentListController extends AbstractElementPropertySectionContr
                     } else if (value != null && value.startsWith(oldConnectionName + "_")) {
                         curParam.setValue(value.replaceFirst(oldConnectionName + "_", newConnectionName + "_"));
                     }
-                } else if (curParam.getFieldType().equals(EParameterFieldType.TABLE)) {
+                } else if(curParam.getFieldType().equals(EParameterFieldType.COMPONENT_REFERENCE)){
+                    String value = (String)curParam.getValue();
+                    if (oldConnectionName.equals(curParam.getValue())) {
+                        curParam.setValue(newConnectionName);
+                    } else if (value != null && value.startsWith(oldConnectionName + "_")) {
+                        curParam.setValue(value.replaceFirst(oldConnectionName + "_", newConnectionName + "_"));
+                    }
+                }else if (curParam.getFieldType().equals(EParameterFieldType.TABLE)) {
                     final Object[] itemsValue = curParam.getListItemsValue();
                     for (Object element : itemsValue) {
                         if (element instanceof IElementParameter) {

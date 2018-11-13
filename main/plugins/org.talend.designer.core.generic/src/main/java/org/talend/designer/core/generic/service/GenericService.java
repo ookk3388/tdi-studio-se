@@ -53,4 +53,10 @@ public class GenericService implements IGenericService {
         return genericComponents;
     }
 
+    @Override
+    public void resetReferenceValue(Object proObject, Object value) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

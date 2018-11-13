@@ -1608,6 +1608,16 @@ public class Component extends AbstractBasicComponent {
                     if (value == null && EParameterFieldType.TABLE.equals(param.getFieldType())) {
                         value = GenericTableUtils.getTableValues(iNodeComponentProperties.getProperties(param.getName()), param);
                     }
+                    if(value == null && EParameterFieldType.COMPONENT_REFERENCE.equals(param.getFieldType())){
+                        Properties properties = iNodeComponentProperties.getProperties(param.getName());
+                        if(properties != null && properties instanceof ComponentReferenceProperties){
+                            ComponentReferenceProperties refProperties = (ComponentReferenceProperties) properties;
+                            Property comInstance = refProperties.getValuedProperty(refProperties.componentInstanceId.getName());
+                            if(comInstance != null){
+                                value = comInstance.getStoredValue();
+                            }
+                        }
+                    }
                     return value;
                 }
             }
