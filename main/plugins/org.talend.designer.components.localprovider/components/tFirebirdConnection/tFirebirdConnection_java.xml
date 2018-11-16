@@ -89,7 +89,16 @@
     >
        <DEFAULT>"__COMP_DEFAULT_FILE_DIR__/database.fdb"</DEFAULT>
     </PARAMETER>
-
+    
+    <PARAMETER 
+      NAME="PROPERTIES" 
+      FIELD="TEXT" 
+      NUM_ROW="40" 
+      REPOSITORY_VALUE="PROPERTIES_STRING"
+    >
+        <DEFAULT>""</DEFAULT>
+    </PARAMETER>
+    
     <PARAMETER
       NAME="USER"
       FIELD="TEXT"

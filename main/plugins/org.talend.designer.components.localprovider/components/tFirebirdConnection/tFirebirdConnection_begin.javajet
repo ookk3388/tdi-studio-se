@@ -13,7 +13,13 @@ imports="
 			super.createURL(node);
 			String port = "";
 %>
-		String url_<%=cid %> ="jdbc:firebirdsql:" + <%=dbhost%> + <%if(!"".equals(dbport) && !"\"\"".equals(dbport)){%> "/" + <%=dbport%> + <%}%>":" +  <%=dbname%>;
+        String dbProperties_<%=cid%> = <%=dbproperties%>;
+        String url_<%=cid%> = null;
+        if(dbProperties_<%=cid%> == null || dbProperties_<%=cid%>.trim().length() == 0) {
+            url_<%=cid %> = "jdbc:firebirdsql:" + <%=dbhost%> + <%if(!"".equals(dbport) && !"\"\"".equals(dbport)){%> "/" + <%=dbport%> + <%}%>":" +  <%=dbname%>;
+        } else {
+            url_<%=cid %> = "jdbc:firebirdsql:" + <%=dbhost%> + <%if(!"".equals(dbport) && !"\"\"".equals(dbport)){%> "/" + <%=dbport%> + <%}%>":" +  <%=dbname%> + "?" + <%=dbproperties%>;
+        }
 <%	
 		}
 		
