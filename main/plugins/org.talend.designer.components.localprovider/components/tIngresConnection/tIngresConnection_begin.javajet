@@ -11,10 +11,16 @@ imports="
 	
 		public void createURL(INode node) {
 			super.createURL(node);
-			String dbServer = ElementParameterParser.getValue(node, "__SERVER__");
+			String dbServer = ElementParameterParser.getValue(node, "__SERVER__");  
+            if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 %>
-		String url_<%=cid %> = "jdbc:ingres://" + <%=dbServer%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
-<%	
+                String url_<%=cid %> = "jdbc:ingres://" + <%=dbServer%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
+<%        
+            } else {
+%>
+                String url_<%=cid %> = "jdbc:ingres://" + <%=dbServer%> + ":" + <%=dbport%> + "/" + <%=dbname%> + ";" + <%=dbproperties%>;
+<%      
+            }	
 		}
 		
 		public String getDirverClassName(INode node){
