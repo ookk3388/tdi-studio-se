@@ -17,10 +17,15 @@ imports="
 	class DBInputBeginUtil extends DefaultDBInputUtil{
 	    
 		public void setURL(INode node) {
-			
+            if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 %>
 			String url_<%=cid %> = "jdbc:sapdb://"+<%=dbhost%>+":"+<%=dbport%>+"/" + <%=dbname%>;
 <%
+            } else {
+%>
+            String url_<%=cid %> = "jdbc:sapdb://"+<%=dbhost%>+":"+<%=dbport%>+"/" + <%=dbname%> + "?" + <%=dbproperties%>;
+<%
+            }
 		}
 		
 		public String getDirverClassName(INode node){
