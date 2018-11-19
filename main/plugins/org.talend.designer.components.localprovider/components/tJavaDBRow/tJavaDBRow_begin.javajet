@@ -61,20 +61,38 @@ imports="
 	    
 		public void setURL(INode node) {
 			if(("EMBEDED").equals(frameworkType)){
+                if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 			%>
 				String url_<%=cid%> = "jdbc:derby:" + <%=dbname%>;
 			<%
+                } else {
+            %>
+                String url_<%=cid%> = "jdbc:derby:" + <%=dbname%> + ";" + <%=dbproperties%>;
+            <%
+                }
 			}
 			else
 			{
 				if(("JCCJDBC").equals(frameworkType)){
+                    if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 				%>
 					String url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
 				<%
+                    } else {
+                %>
+                    String url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%> + ";" + <%=dbproperties%>;
+                <%
+                    }
 				} else{
+                    if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 				%>
 					String url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
 				<%
+                    } else {
+                %>
+                    String url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%> + ";" + <%=dbproperties%>;
+                <%
+                    }
 				}
 			}
 		}

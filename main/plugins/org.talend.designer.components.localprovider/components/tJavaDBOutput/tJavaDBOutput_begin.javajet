@@ -27,6 +27,8 @@ skeleton="../templates/db_output_bulk.skeleton"
     String dbhost = ElementParameterParser.getValue(node, "__HOST__");
     
 	String dbport = ElementParameterParser.getValue(node, "__PORT__");	
+    
+    String dbproperties = ElementParameterParser.getValue(node, "__PROPERTIES__");
 				
     List<Map<String, String>> addCols =
             (List<Map<String,String>>)ElementParameterParser.getObjectValue(
@@ -102,7 +104,17 @@ String url_<%=cid%> = null;
 if(("EMBEDED").equals(frameworkType)) {
 	%>
 	jdbcDriver_<%=cid%> = "org.apache.derby.jdbc.EmbeddedDriver";
-	url_<%=cid%> = "jdbc:derby:" + <%=dbname%>;
+<%
+                if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
+%>
+				url_<%=cid%> = "jdbc:derby:" + <%=dbname%>;
+<%
+                } else {
+%>
+                url_<%=cid%> = "jdbc:derby:" + <%=dbname%> + ";" + <%=dbproperties%>;
+<%
+                }
+%>
 	//set the root path of the database
 	System.setProperty("derby.system.home",<%=dbRootPath%>);
 	<%
@@ -110,13 +122,31 @@ if(("EMBEDED").equals(frameworkType)) {
 	if(("JCCJDBC").equals(frameworkType)) {
 		%>
 		jdbcDriver_<%=cid%> = "com.ibm.db2.jcc.DB2Driver";
-		url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
-		<%
+        
+        
+<%
+                if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
+%>
+                url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
+<%
+                } else {
+%>
+                url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%> + ";" + <%=dbproperties%>;
+<%
+                }
 	} else {
 		%>
 		jdbcDriver_<%=cid%> = "org.apache.derby.jdbc.ClientDriver";
-		url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
-		<%
+<%
+        if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
+%>
+        url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%>;
+<%
+        } else {
+%>
+        url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=dbname%> + ";" + <%=dbproperties%>;
+<%
+        }
 	}
 	%>
 	<%

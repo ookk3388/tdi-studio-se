@@ -72,19 +72,37 @@ imports="
 %>
 <%
 			if(("EMBEDED").equals(frameworkType)) {
+                if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 %>
 				String url_<%=cid%> = "jdbc:derby:" + <%=db%>;
 <%
+                } else {
+%>
+                String url_<%=cid%> = "jdbc:derby:" + <%=db%> + ";" + <%=dbproperties%>;
+<%
+                }
 			} else {
     			if(("JCCJDBC").equals(frameworkType)) {
+                    if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 %>
-    				String url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=db%>;
+                    String url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=db%>;
 <%
+                    } else {
+%>
+                    String url_<%=cid%> = "jdbc:derby:net://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=db%> + ";" + <%=dbproperties%>;
+<%
+                    }
     			} else {
+                    if(dbproperties == null || "\"\"".equals(dbproperties.trim())) {
 %>
     				String url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=db%>;
 <%
-    			}
+                    } else {
+%>
+                    String url_<%=cid%> = "jdbc:derby://" + <%=dbhost%> + ":" + <%=dbport%> + "/" + <%=db%> + ";" + <%=dbproperties%>;
+<%
+                    }
+                }
     		}
 %>
 <%
