@@ -478,8 +478,6 @@ class FirebirdManager extends Manager {
     private boolean useExistingConnection;
 	private String connection;
     
-    private static final String SEPARATOR = "?";
-    
     public FirebirdManager(String host, String dbName, String tableName, String userName, String cid,boolean useExistingConnection, String connection, String additionalParams ) {
         super(dbName, tableName, userName, cid, additionalParams);
         this.host = host;
@@ -500,9 +498,6 @@ class FirebirdManager extends Manager {
     }
     protected String getRProtectedChar() {
         return "";
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -726,8 +721,6 @@ class InterbaseManager extends Manager {
     private boolean useExistingConnection;
 	private String connection;
     
-    private static final String SEPARATOR = "?";
-    
     public InterbaseManager(String host, String dbName, String tableName, String userName, String cid, boolean useExistingConnection, String connection, String additionalParams ) {
         super(dbName, tableName, userName, cid, additionalParams);
         this.host = host;
@@ -748,9 +741,6 @@ class InterbaseManager extends Manager {
     }
     protected String getRProtectedChar() {
         return "\\\"";
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -871,15 +861,10 @@ class MaxDBManager extends Manager {
     private String host;
     private String port;
     
-    private static final String SEPARATOR = "?";
-    
     public MaxDBManager(String host, String port, String dbName, String tableName, String userName, String cid, String additionalParams) {
         super(dbName, tableName, userName, cid, additionalParams);
         this.host = host;
         this.port = port;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     protected String getDriver() {
         return "com.sap.dbtech.jdbc.DriverSapDB";
@@ -991,8 +976,6 @@ class MysqlManager extends Manager {
     private String connection;        
     private String dbVersion;
     
-    private static final String SEPARATOR = "?";
-    
     public MysqlManager(String host, String port, String dbName, String tableName, String userName, boolean useExistingConnection, String connection, boolean temporary, String cid, String dbVersion, String additionalParams) {
         super(dbName, tableName, userName, cid, additionalParams);
         this.host = host;
@@ -1017,9 +1000,6 @@ class MysqlManager extends Manager {
 			jdbcURL = "\"jdbc:mariadb\"";
 		}
         return jdbcURL+"+\"://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -1057,8 +1037,6 @@ class NetezzaManager extends Manager {
     private boolean useExistingConnection;
     private String connection;
     
-    private static final String SEPARATOR = "?";
-    
     public NetezzaManager(String host, String port, String dbName, String tableName, String userName, boolean useExistingConnection, String connection, String cid, String additionalParams) {
         super(dbName, tableName, userName, cid, additionalParams);
         this.host = host;
@@ -1071,9 +1049,6 @@ class NetezzaManager extends Manager {
     }
     public String getSpecificConnectionURL() {
         return "\"jdbc:netezza://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -1298,8 +1273,6 @@ class PostgreManager extends Manager {
     private boolean useExistingConnection;
     private String connection;
     
-    private static final String SEPARATOR = "?";
-    
     public PostgreManager(String host, String port, String dbName, String tableName, String dbSchema, String userName, boolean useExistingConnection, String connection, String cid,
             boolean temporary, boolean unlogged, String additionalParams) {
         super(dbName, tableName, userName ,cid, additionalParams);
@@ -1316,9 +1289,6 @@ class PostgreManager extends Manager {
     }
     public String getSpecificConnectionURL() {
         return "\"jdbc:postgresql://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -1368,8 +1338,6 @@ class PostgrePlusManager extends Manager {
     private String dbSchema;
     private boolean useExistingConnection;
     private String connection;   
-
-    private static final String SEPARATOR = "?";
     
     public PostgrePlusManager(String host, String port, String dbName, String tableName, String dbSchema, String userName, boolean useExistingConnection, String connection, String cid, String additionalParams) {
         super(dbName, tableName, userName, cid, additionalParams);
@@ -1384,9 +1352,6 @@ class PostgrePlusManager extends Manager {
     }
     public String getSpecificConnectionURL() {
         return "\"jdbc:postgresql://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -1763,8 +1728,6 @@ class GreenplumManager extends Manager {
     private String dbSchema;
     private boolean useExistingConnection;
     private String connection;    
-
-    private static final String SEPARATOR = "?";
     
     public GreenplumManager(String host, String port, String dbName, String tableName, String dbSchema, String userName, boolean useExistingConnection, String connection, String cid, String additionalParams) {
         super(dbName, tableName, userName ,cid, additionalParams);
@@ -1779,9 +1742,6 @@ class GreenplumManager extends Manager {
     }
     public String getSpecificConnectionURL() {
         return "\"jdbc:postgresql://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -1834,8 +1794,6 @@ class VerticaManager extends Manager {
     private boolean useExistingConnection;
     private String connection;        
     
-    private static final String SEPARATOR = "?";
-    
     public VerticaManager(String host, String port, String dbName, String tableName, String dbSchema, String userName, boolean useExistingConnection, String connection, String cid, String db_version, String additionalParams) {
         super(dbName, tableName, userName ,cid, additionalParams);
         this.host = host;
@@ -1854,9 +1812,6 @@ class VerticaManager extends Manager {
     }
     public String getSpecificConnectionURL() {
         return "\"jdbc:vertica://\" + " + host + " + \":\" + " + port + " + \"/\" + " + dbName;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
@@ -2076,8 +2031,6 @@ class SnowflaketManager extends Manager {
     private String connection;
     boolean enforceDelimitedIdentifiers;
     
-    private static final String SEPARATOR = "?";
-    
     public SnowflaketManager(String account,String dbName,String dbSchema, String userName,String role,String tableName, String connection, boolean useExistingConnection, String cid, boolean enforceDelimitedIdentifiers, String additionalParams) {
         super(dbName, tableName, userName , cid, additionalParams);
         this.account=account;
@@ -2130,9 +2083,6 @@ class SnowflaketManager extends Manager {
             return false;
         }
         return true;
-    }
-    public String getSeparator(){
-        return SEPARATOR;
     }
     public String getConnection() {
         StringBuilder javaCode = new StringBuilder();
