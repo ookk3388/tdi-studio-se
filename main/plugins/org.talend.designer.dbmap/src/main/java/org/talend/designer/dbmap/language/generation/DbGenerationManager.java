@@ -545,7 +545,7 @@ public abstract class DbGenerationManager {
         sqlQuery = handleQuery(sqlQuery);
         queryColumnsName = handleQuery(queryColumnsName);
 
-        return sqlQuery;
+        return replaceContextParamsForExpression(component, sqlQuery);
     }
 
     protected DbMapComponent getDbMapComponent(DbMapComponent dbMapComponent) {
@@ -620,6 +620,69 @@ public abstract class DbGenerationManager {
             }
         }
         return expression;
+    }
+    
+    /**
+     * 
+     * DOC hwang Comment method "replaceExpression".
+     * 
+     * @param expression
+     * @param component
+     */
+    protected String replaceContextParamsForExpression(DbMapComponent component, String expression) {
+        if (expression == null) {
+            return null;
+        }
+        if (DEFAULT_TAB_SPACE_STRING.equals(tabSpaceString)) {
+            List<String> contextList = getContextList(component);
+            for (String context : contextList) {
+                if (expression.contains(context)) {
+                	expression = getExpressionAfterChange(expression, context);
+                }
+            }
+            List<String> connContextList = getConnectionContextList(component);
+            for (String context : connContextList) {
+                if (expression.contains(context)) {
+                	expression = getExpressionAfterChange(expression, context);
+                }
+            }
+            Set<String> globalMapList = getGlobalMapList(component, expression);
+            for (String globalMapStr : globalMapList) {
+                String regex = parser.getGlobalMapExpressionRegex(globalMapStr);
+                String replacement = parser.getGlobalMapReplacement(globalMapStr);
+                expression = expression.replaceAll(regex, "\" +" + replacement + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ 
+            }
+        }
+        return expression;
+    }
+    
+    private String getExpressionAfterChange(String expression, String context){
+    	StringBuffer sb = new StringBuffer();
+    	boolean endWithContext = expression.endsWith(context);
+    	boolean startWithContext = expression.startsWith(context);
+    	
+    	String[] exps = expression.split(context);
+    	if(exps.length <2){
+    		return expression;
+    	}
+    	for(int i = 0; i< exps.length; i++){
+    		if(startWithContext && i == 0){
+    			sb.append(context);
+    		}
+    		sb.append(exps[i]);
+    		if(i < exps.length - 1){
+    			if(!exps[i].trim().endsWith("+") && !exps[i].trim().startsWith("+")){
+    				sb.append("\" +" + context + "+ \"");
+    			}else{
+    				sb.append( context);
+    			}
+    		}
+    		if(endWithContext && i == exps.length - 1){
+    			sb.append(context);
+    		}
+    	}
+    	
+    	return sb.toString();
     }
 
     protected void replaceQueryContext(List<String> querySegments, String context) {
