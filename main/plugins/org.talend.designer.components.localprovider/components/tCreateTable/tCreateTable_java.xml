@@ -208,10 +208,21 @@
       FIELD="TEXT" 
       NUM_ROW="85" 
       REPOSITORY_VALUE="PROPERTIES_STRING"
+      NOT_SHOW_IF="(DBTYPE=='SQLITE') OR ((DBTYPE=='DBORACLE') AND (CONNECTION_TYPE == 'ORACLE_WALLET'))"
     >
         <DEFAULT>""</DEFAULT>
     </PARAMETER>
-
+        
+    <PARAMETER
+      NAME="NOTE"
+      FIELD="LABEL"
+      NUM_ROW="86"
+      SHOW_IF="(DBTYPE=='DBORACLE') AND (CONNECTION_TYPE == 'ORACLE_SID' OR
+                                         CONNECTION_TYPE == 'ORACLE_SERVICE_NAME' OR
+                                         CONNECTION_TYPE == 'ORACLE_OCI' OR
+                                         CONNECTION_TYPE == 'ORACLE_RAC')">
+          <DEFAULT>*Note: Example for Additional JDBC Parameters: "parameterName1=value1&amp;&amp;parameterName2=value2"</DEFAULT>
+    </PARAMETER>
 
 	<PARAMETER
       NAME="PORT"
@@ -813,11 +824,6 @@
     >
        <DEFAULT>false</DEFAULT>
     </PARAMETER>
-  
-<!--   	<PARAMETER NAME="PROPERTIES" FIELD="TEXT" NUM_ROW="40" REPOSITORY_VALUE="PROPERTIES_STRING"
-  		SHOW_IF="((DBTYPE=='AS400')OR (DBTYPE=='MSSQL')) and (USE_EXISTING_CONNECTION == 'false')">
-		<DEFAULT>"prompt=false"</DEFAULT>
-	</PARAMETER> -->
 
     <PARAMETER
       NAME="ENCODING"
