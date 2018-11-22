@@ -441,6 +441,7 @@ public abstract class DbGenerationManager {
             }
 
             StringBuilder sbWhere = new StringBuilder();
+            this.tabSpaceString = DEFAULT_TAB_SPACE_STRING;
             boolean isFirstClause = true;
             for (int i = 0; i < lstSizeInputTables; i++) {
                 ExternalDbMapTable inputTable = inputTables.get(i);
@@ -448,7 +449,6 @@ public abstract class DbGenerationManager {
                     isFirstClause = false;
                 }
             }
-
             /*
              * for addition conditions
              */
@@ -486,16 +486,19 @@ public abstract class DbGenerationManager {
                         }
                     }
                 }
+                
                 List<ExternalDbMapEntry> customOtherConditionsEntries = outputTable.getCustomOtherConditionsEntries();
                 if (customOtherConditionsEntries != null) {
                     for (ExternalDbMapEntry entry : customOtherConditionsEntries) {
                         String exp = initExpression(component, entry);
                         if (exp != null && !DbMapSqlConstants.EMPTY.equals(exp.trim())) {
+                            exp = replaceVariablesForExpression(component, exp);
                             otherAddition.add(exp);
                         }
                     }
                 }
             }
+            this.tabSpaceString = tabString;
 
             String whereClauses = sbWhere.toString();
 
@@ -545,7 +548,7 @@ public abstract class DbGenerationManager {
         sqlQuery = handleQuery(sqlQuery);
         queryColumnsName = handleQuery(queryColumnsName);
 
-        return replaceContextParamsForExpression(component, sqlQuery);
+        return sqlQuery;
     }
 
     protected DbMapComponent getDbMapComponent(DbMapComponent dbMapComponent) {
@@ -610,40 +613,6 @@ public abstract class DbGenerationManager {
                     if (expression.contains(context)) {
                         expression = expression.replaceAll("\\b" + context + "\\b", "\" +" + context + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     }
-                }
-            }
-            Set<String> globalMapList = getGlobalMapList(component, expression);
-            for (String globalMapStr : globalMapList) {
-                String regex = parser.getGlobalMapExpressionRegex(globalMapStr);
-                String replacement = parser.getGlobalMapReplacement(globalMapStr);
-                expression = expression.replaceAll(regex, "\" +" + replacement + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ 
-            }
-        }
-        return expression;
-    }
-    
-    /**
-     * 
-     * DOC hwang Comment method "replaceExpression".
-     * 
-     * @param expression
-     * @param component
-     */
-    protected String replaceContextParamsForExpression(DbMapComponent component, String expression) {
-        if (expression == null) {
-            return null;
-        }
-        if (DEFAULT_TAB_SPACE_STRING.equals(tabSpaceString)) {
-            List<String> contextList = getContextList(component);
-            for (String context : contextList) {
-                if (expression.contains(context)) {
-                	expression = getExpressionAfterChange(expression, context);
-                }
-            }
-            List<String> connContextList = getConnectionContextList(component);
-            for (String context : connContextList) {
-                if (expression.contains(context)) {
-                	expression = getExpressionAfterChange(expression, context);
                 }
             }
             Set<String> globalMapList = getGlobalMapList(component, expression);

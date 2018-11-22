@@ -413,4 +413,9 @@ public class DbGenerationManagerTest extends DbGenerationManagerTestHelper {
     	dbManager.appendSqlQuery(sb, "table1", false);
     	Assert.assertTrue(dbManager.getQuerySegments().isEmpty());
     }
+    
+    @Test
+    public void testBuildSqlSelect() {
+        
+    }
 }
