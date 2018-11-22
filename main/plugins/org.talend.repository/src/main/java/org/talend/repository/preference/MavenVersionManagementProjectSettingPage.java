@@ -14,7 +14,9 @@ package org.talend.repository.preference;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.resources.IWorkspace;
@@ -116,7 +118,8 @@ public class MavenVersionManagementProjectSettingPage extends AbstractVersionMan
     private boolean oldUseSnapshot;
 
     private List<Item> modifiedJobs = new ArrayList<>();
-
+    
+    protected Map<String, String> ItemVersionObjectToVersion = new HashMap<String, String>();
     public MavenVersionManagementProjectSettingPage() {
         super();
         this.noDefaultAndApplyButton();
@@ -364,6 +367,12 @@ public class MavenVersionManagementProjectSettingPage extends AbstractVersionMan
                     newVersionText.setText(appliedFixedVersion);
                     for (TableItem tableItem : itemTable.getItems()) {
                         tableItem.setText(1, appliedFixedVersion);
+                        if (tableItem.getData() instanceof ItemVersionObject) {
+                            ItemVersionObject data = (ItemVersionObject) tableItem.getData();
+                            if (null != data) {
+                                ItemVersionObjectToVersion.put(data.getItem().getProperty().getId(), version);
+                            }
+                        }
                     }
                     itemTable.layout();
                 }
@@ -414,6 +423,18 @@ public class MavenVersionManagementProjectSettingPage extends AbstractVersionMan
         newVersionText.setEnabled(false);
         if (itemTable.getSelectionCount() > 0) {
             newVersionText.setText(appliedFixedVersion);
+        }
+        for (TableItem tableItem : itemTable.getItems()) {
+            tableItem.setText(1, appliedFixedVersion);
+            if (tableItem.getData() instanceof ItemVersionObject) {
+                ItemVersionObject data = (ItemVersionObject) tableItem.getData();
+                if (null != data) {
+                    tableItem.setText(1,
+                            null == ItemVersionObjectToVersion.get(data.getItem().getProperty().getId()) ? data.getNewVersion()
+                                    : ItemVersionObjectToVersion.get(data.getItem().getProperty().getId()));
+                }
+            }
+
         }
     }
 
@@ -489,7 +510,14 @@ public class MavenVersionManagementProjectSettingPage extends AbstractVersionMan
             tableItem.setImage(itemsImage);
             tableItem.setText(item.getProperty().getLabel());
             // version
-            tableItem.setText(1, object.getNewVersion());
+            if (useJobVersionButton.getSelection()) {
+                String jobDefaultVersion = MavenVersionUtils.getDefaultVersion(object.getItem().getProperty().getVersion());
+                tableItem.setText(1, jobDefaultVersion);
+            } else {
+                tableItem.setText(1, null == ItemVersionObjectToVersion.get(item.getProperty().getId()) ? object.getNewVersion()
+                        : ItemVersionObjectToVersion.get(item.getProperty().getId()));
+            }
+
         }
         itemTable.setRedraw(true);
     }
