@@ -43,6 +43,8 @@ import org.talend.designer.dbmap.external.data.ExternalDbMapTable;
 public class DbGenerationManagerTestHelper {
 
     protected DbMapComponent dbMapComponent;
+    
+    protected Process process;
 
     protected void init(String schema, String main_table, String main_alias, String lookup_table, String lookup_alias) {
         List<IConnection> incomingConnections = new ArrayList<IConnection>();
@@ -116,7 +118,7 @@ public class DbGenerationManagerTestHelper {
         param = new JobContextParameter();
         param.setName("lookup");
         newParamList.add(param);
-        Process process = mock(Process.class);
+        process = mock(Process.class);
         JobContextManager contextManger = new JobContextManager();
         contextManger.setDefaultContext(newContext);
         when(process.getContextManager()).thenReturn(contextManger);
@@ -124,7 +126,7 @@ public class DbGenerationManagerTestHelper {
 
     }
 
-    private IConnection mockConnection(String schemaName, String tableName, String[] columns) {
+    protected IConnection mockConnection(String schemaName, String tableName, String[] columns) {
         Connection connection = mock(Connection.class);
         Node node = mock(Node.class);
         ElementParameter param = new ElementParameter(node);
